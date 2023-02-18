@@ -59,7 +59,7 @@ def precipitation():
         precip_dict['prcp'] = precip
         all_precip.append(precip_dict)
 
-
+    session.close()
     return jsonify(all_precip)
 
 @app.route("/api/v1.0/stations")
@@ -81,3 +81,6 @@ def temp_summary():
 def time_temp_summary():
 
     return
+
+if __name__ == "__main__":
+    app.run(debug=True)
