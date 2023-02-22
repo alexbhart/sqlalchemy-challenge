@@ -64,13 +64,34 @@ def precipitation():
 
 @app.route("/api/v1.0/stations")
 def stations():
+    #start session
+    session = Session(engine)
+    #get station list
+    all_stations = session.query(Station.station).all()
+    station_list = []
+    for x in all_stations:
+        station_list.append(x)
+    session.close()
 
-    return
+
+    return jsonify(station_list)
 
 @app.route("/api/v1.0/tobs")
 def tobs():
-
-    return
+    session = Session(engine)
+    #get most active station
+    most_active = session.query(Measurement.station, func.count(Measurement.station)).group_by(Measurement.station).order_by(func.count(Measurement.station).desc()).first()
+    active_summary = session.query(Measurement.station, func.min(Measurement.tobs), func.max(Measurement.tobs), func.round(func.avg(Measurement.tobs), 2)).filter(Measurement.station == most_active[0]).all()
+    last_year_tobs = session.query(Measurement.date, Measurement.tobs).filter(Measurement.station == most_active[0]).filter(Measurement.date > year_ago).order_by(Measurement.date.desc()).all()
+    past_year_tobs = []
+    for date, tobs in last_year_tobs:
+        tobs_dict = {}
+        tobs_dict['date'] = date
+        tobs_dict['tobs'] = tobs
+        past_year_tobs.append(last_year_tobs)
+    
+    session.close()
+    return jsonify(past_year_tobs)
 
 @app.route("/api/v1.0/<start>")
 def temp_summary():

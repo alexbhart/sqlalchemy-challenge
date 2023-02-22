@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "../Instructions"
+		},
+		{
+			"name": "sqlalchemy-challenge",
+			"path": "."
+		}
+	],
+	"settings": {}
+}
