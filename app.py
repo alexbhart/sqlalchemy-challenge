@@ -81,6 +81,9 @@ def tobs():
     session = Session(engine)
     #get most active station
     most_active = session.query(Measurement.station, func.count(Measurement.station)).group_by(Measurement.station).order_by(func.count(Measurement.station).desc()).first()
+    recent_date = session.query(Measurement.date).order_by(Measurement.date.desc()).first()
+    recent_date = dt.date.fromisoformat(recent_date[0])
+    year_ago = recent_date - dt.timedelta(days = 365)
     active_summary = session.query(Measurement.station, func.min(Measurement.tobs), func.max(Measurement.tobs), func.round(func.avg(Measurement.tobs), 2)).filter(Measurement.station == most_active[0]).all()
     last_year_tobs = session.query(Measurement.date, Measurement.tobs).filter(Measurement.station == most_active[0]).filter(Measurement.date > year_ago).order_by(Measurement.date.desc()).all()
     past_year_tobs = []
@@ -94,14 +97,34 @@ def tobs():
     return jsonify(past_year_tobs)
 
 @app.route("/api/v1.0/<start>")
-def temp_summary():
-
-    return
+def temp_summary(start):
+    session = Session(engine)
+    recent_summary = session.query(Measurement.station, func.min(Measurement.tobs), func.max(Measurement.tobs), func.round(func.avg(Measurement.tobs), 2)).filter(Measurement.date >= start).all()
+    all_data = []
+    for station, min, max, avg in recent_summary:
+        all_dict = {}
+        all_dict['station'] = station
+        all_dict['min'] = min
+        all_dict['max'] = max
+        all_dict['avg'] = avg
+        all_data.append(all_dict)
+    session.close()
+    return jsonify(all_dict)
 
 @app.route("/api/v1.0/<start>/<end>")
-def time_temp_summary():
-
-    return
+def time_temp_summary(start, end):
+    session = Session(engine)
+    ranged_summary = session.query(Measurement.station, func.min(Measurement.tobs), func.max(Measurement.tobs), func.round(func.avg(Measurement.tobs), 2)).filter(end >= Measurement.date >= start).all()
+    all_data = []
+    for station, min, max, avg in ranged_summary:
+        all_dict = {}
+        all_dict['station'] = station
+        all_dict['min'] = min
+        all_dict['max'] = max
+        all_dict['avg'] = avg
+        all_data.append(all_dict)
+    session.close()
+    return jsonify(all_dict)
 
 if __name__ == "__main__":
     app.run(debug=True)
